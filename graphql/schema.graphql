@@ -1,0 +1,429 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-01-01 13:00:00`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"A date string with format `Y-m-d`, e.g. `2011-05-23`."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    status: Int!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+type Imagem{
+    id: ID!
+    imagem: String
+    ramo: String!
+    descricao: String!
+    cidade:String!
+    estado: String!
+    telefone: String!
+    logradouro: String!
+    category: Category! @belongsTo
+    avaliacoes: [Avaliacao] @hasMany
+    user: User! @belongsTo
+    portifolios: [Portifolio] @hasMany
+    created_at: String
+    updated_at: String
+}
+
+type PerfilCliente{
+    id: ID!
+    cidade: String!
+    estado: String!
+    imagem: String
+    telefone: String!
+    logradouro: String!
+    user: User! @belongsTo
+    created_at: DateTime
+    updated_at: DateTime
+}
+
+type Orcamento{
+    id: ID!
+    data: String!
+    horaInicio: String!
+    horaFim: String!
+    descricao: String!
+    date:String
+    proposta: Proposta! @belongsTo
+}
+
+type Proposta{
+    id: ID!
+    titulo: String!
+    valor: String!
+    local: String!
+    descricao: String!
+    tipo: String!
+    tempo:String!
+    status: Int!
+    finalizar: Int!
+    date:String
+    user_envia: PerfilCliente! @belongsTo
+    user_recebe: Imagem! @belongsTo
+    orcamento: [Orcamento] @hasMany
+}
+
+
+type Category{
+    id: ID!
+    name: String!
+    imagens: [Imagem] @hasMany
+    image: String!
+    created_at: String
+    updated_at:String
+}
+
+type Post {
+    id: ID!
+    title: String!
+    content: String!
+    user: User! @belongsTo
+    created_at: String!
+    comments: [Comment] @hasMany
+}
+
+
+type Comment{
+    id: ID!
+    reply: String!
+    post: Post! @belongsTo
+}
+
+type Avaliacao{
+    id: ID!
+    titulo:String!
+    estrela: Int!
+    recomenda: Int!
+    descricao: String!
+    date:String
+    user_avalia: PerfilCliente! @belongsTo
+    user_avaliado: Imagem! @belongsTo
+}
+
+type PropostaCategoria{
+    id: ID!
+    titulo: String!
+    valor: String!
+    local: String!
+    tempo:String!
+    descricao: String!
+    tipo: String!
+    status: Int!
+    date:String
+    user_envia: PerfilCliente! @belongsTo
+    category: Category! @belongsTo
+    user_aceito: Imagem @belongsTo
+    lances: [Lance] @hasMany
+}
+
+type Lance{
+    id: ID!
+    data: String!
+    horaInicio: String!
+    horaFim: String!
+	status:Int!
+    descricao: String!
+    date:String
+    user_lance: Imagem! @belongsTo
+    proposta_categoria: PropostaCategoria! @belongsTo
+}
+
+type Portifolio{
+    id:ID!
+    titulo:String!
+    descricao:String!
+    imagens: String
+    imagem: Imagem! @belongsTo 
+}
+
+type Mensagem{
+    id:ID!
+    mensagem:String!
+    date:String
+    user_envia: PerfilCliente! @belongsTo
+    user_recebe: Imagem! @belongsTo
+    proposta_categoria: PropostaCategoria! @belongsTo
+    resposta: [Resposta] @hasMany
+}
+
+type Resposta{
+    id:ID!
+    reply:String!
+    date:String
+    user_envia: Imagem! @belongsTo
+    user_recebe: PerfilCliente! @belongsTo
+    mensagem: Mensagem! @belongsTo
+}
+
+type Query{
+    """ Ignora """
+    posts: [Post] @all
+    post (id: Int! @eq): Post @find
+
+    """ Consulta para usuarios """
+    users: [User] @all
+    user (id: Int! @eq): User @find
+    me: User @middleware(checks:["auth:api"]) @auth    
+
+    """ Consultas para perfil profissional """
+    imagens: [Imagem] @all
+    imagem (id: Int! @eq): Imagem @find
+    imageForUserId(user_id: Int!):[Imagem]
+    proByCategory(category: Int!,orderBy: [OrderByClause!] @orderBy):[Imagem] @paginate(builder:"App\\GraphQL\\Queries\\ProByCategory@resolve")
+    searchWithCat(category: Int!, cidade: String ,estado:String,orderBy: [OrderByClause!] @orderBy):[Imagem] @paginate(builder:"App\\GraphQL\\Queries\\searchWithCat@resolve")
+
+
+    """ Consultas para perfil cliente teste: Float"""
+    clients: [PerfilCliente] @all
+    client (id: Int! @eq): PerfilCliente @find
+    clientForUserId(user_id: Int!): [PerfilCliente]
+
+    """ Consultas para categorias """
+    categories: [Category] @all
+    category(id: ID @eq):Category! @find
+
+    """ Ignora """
+    latestPost: Post!
+
+    """ Consultas para proposta """
+    propostas: [Proposta] @all
+    proposta (id: Int! @eq): Proposta @find
+    propostaEnvia(user_envia_id: Int!,orderBy: [OrderByClause!] @orderBy):[Proposta] @paginate(builder:"App\\GraphQL\\Queries\\PropostaEnvia@resolve")
+    propostaRecebe(user_recebe_id:Int!,orderBy: [OrderByClause!] @orderBy):[Proposta] @paginate(builder:"App\\GraphQL\\Queries\\PropostaRecebe@resolve")
+    propostaLimit(user_envia:Int!):[Proposta]
+    
+    """ Consultas para orcamento """
+    orcamentos: [Orcamento] @all
+    orcamento(id: Int! @eq): Orcamento @find
+    
+    """ AVALIACAO Media total e conta quantidade de médias """
+    mediaAvaliacao(user_avaliado:Int!):Float
+    contaAvaliacao(user_avaliado:Int!):Int
+    avaliacaoForAvaliadoId(user_avaliado:Int!):[Avaliacao]
+    avaliacaoLimit(user_avaliado:Int!):[Avaliacao]
+
+    """Consultas para proposta for category"""
+    
+    # propostaForCategories:[PropostaCategoria] @all
+    propostasForCat(category_id:Int!,orderBy: [OrderByClause!] @orderBy):[PropostaCategoria] @paginate(builder:"App\\GraphQL\\Queries\\PropostasForCat@resolve")
+    propostaCategory(id:Int! @eq): PropostaCategoria @find
+    propostaEnviaCat(user_envia:Int!,orderBy: [OrderByClause!] @orderBy):[PropostaCategoria] @paginate(builder:"App\\GraphQL\\Queries\\PropostaEnviaCat@resolve")
+    propostaCatForUserEnvia(user_envia_id:Int!):[PropostaCategoria]
+    propostaForCatLimit(category:Int!):[PropostaCategoria]
+    
+
+    """ Consultas para lances """
+    lances:[Lance] @all
+    lance(id: Int! @eq): Lance @find
+    lanceProposta(proposta:Int!,user:Int!):[Lance]
+    lanceStatus(proposta:Int!,status:Int!):[Lance]
+    lancesCountProposta(prop_cat:Int!):Int
+
+    """ Consultas para portifolios """
+    portifolio(id:Int! @eq): Portifolio @find
+    portifolios:[Portifolio] @all
+    portifolioForImagem(imagem:Int!):[Portifolio]
+
+    """ Consultas para as mensagens """
+    mensagemUserEnvia(user_envia:Int!,orderBy: [OrderByClause!] @orderBy):[Mensagem] @paginate(builder:"App\\GraphQL\\Queries\\MensagemUserEnvia@resolve")
+    mensagemUserRecebe(user_recebe:Int!,orderBy: [OrderByClause!] @orderBy):[Mensagem] @paginate(builder:"App\\GraphQL\\Queries\\MensagemUserRecebe@resolve")
+    countResposta(mensagem:Int!):Int
+}
+type Mutation{
+    createUser(
+        name: String! @rules(apply:["required","min:4"],messages:{name:"srrrrrrrrrr"}),
+        email: String! @rules(apply:["required","unique:users,email"],messages:{email:"sddddddddddddds"}),
+        password: String! @rules(apply:["min:4"]) @bcrypt,
+        status: Int! @rules(apply:["required"])
+    ): User! @create
+    createCategory(
+        name: String! @rules(apply:["required", "unique:categories,name"]),
+		image: String! @rules(apply:["required"])
+    ): Category @create
+    updateCategory(
+        id: ID! @rules(apply:["required"])
+        name: String @rules(apply:["required", "unique:categories,name"]),
+		image: String! @rules(apply:["required"])
+    ): Category @update
+
+    deleteCategory(
+        id: ID! @rules(apply:["required"])
+    ): Category @delete
+
+    createProposta(
+        titulo: String! @rules(apply:["required"]),
+        valor: String! @rules(apply:["required"]),
+        local: String! @rules(apply:["required"]),
+        tempo:String! @rules(apply:["required"]),
+        descricao: String! @rules(apply:["required"]),
+        tipo: String! @rules(apply:["required"]),
+        status: Int! @rules(apply:["required"]),
+        date:String,
+        finalizar: Int! @rules(apply:["required"]),
+        user_envia_id: Int! @rules(apply:["required"]),
+        user_recebe_id: Int! @rules(apply:["required"])
+    ): Proposta @create
+
+    updateAceita
+    (
+        id: ID! @rules(apply:["required"]),
+        status: Int! @rules(apply:["required"])
+    ): Proposta @update
+    updateFinaliza
+    (
+        id: ID! @rules(apply:["required"]),
+        status: Int! @rules(apply:["required"])
+    ):Proposta @update
+
+
+    createPropostaCategory(
+        titulo: String! @rules(apply:["required"]),
+        valor: String! @rules(apply:["required"]),
+        local: String! @rules(apply:["required"]),
+        descricao: String! @rules(apply:["required"]),
+        tempo:String! @rules(apply:["required"]),
+        tipo: String! @rules(apply:["required"]),
+        date:String,
+        status: Int! @rules(apply:["required"]),
+        category_id:Int! @rules(apply:["required"]),
+        user_envia_id: Int! @rules(apply:["required"]),
+        user_aceito_id: Int
+    ): PropostaCategoria @create
+
+    updatePropostaForCategory(
+        id: ID! @rules(apply:["required"]),
+        status: Int! @rules(apply:["required"]),
+        user_aceito_id: Int
+    ): PropostaCategoria @update
+
+    updatePropostaForCategory2(
+        id:ID! @rules(apply:["required"]),
+        status: Int! @rules(apply:["required"])
+    ):PropostaCategoria @update
+
+    editPropostaCategory(
+        id:ID! @rules(apply:["required"]),
+        titulo: String! @rules(apply:["required"]),
+        valor:String! @rules(apply:["required"]),
+        tempo:String! @rules(apply:["required"]),
+        tipo:String! @rules(apply:["required"]),
+        local:String! @rules(apply:["required"]),
+        descricao: String! @rules(apply:["required"])
+    ):PropostaCategoria @update
+
+    editProposta( 
+        id:ID! @rules(apply:["required"]),
+        titulo:String! @rules(apply:["required"]),
+        valor:String! @rules(apply:["required"]),
+        tempo:String! @rules(apply:["required"]),
+        tipo:String! @rules(apply:["required"]),
+        local:String! @rules(apply:["required"]),
+        descricao:String! @rules(apply:["required"])
+    ):Proposta @update
+
+    createAvaliacao(
+        titulo: String! @rules(apply:["required"]),
+        estrela: Int! @rules(apply:["required"]),
+        descricao: String! @rules(apply:["required"]),
+        recomenda: Int! @rules(apply:["required"]),
+        date:String,
+        user_avalia_id: Int! @rules(apply:["required"]),
+        user_avaliado_id: Int! @rules(apply:["required"])
+    ):Avaliacao @create
+
+    createDisponivel(
+        data: String! @rules(apply:["required"]),
+        horaInicio: String! @rules(apply:["required"]),
+        horaFim: String! @rules(apply:["required"]),
+        descricao: String! @rules(apply:["required"]),
+        date:String,
+        proposta_id: Int! @rules(apply:["required"])
+    ): Orcamento @create
+
+    
+    createMensagem(
+        mensagem: String! @rules(apply:["required"]),
+        date: String,
+        user_envia_id: Int! @rules(apply:["required"]),
+        user_recebe_id: Int! @rules(apply:["required"]),
+        proposta_categoria_id: Int! @rules(apply:["required"])
+    ):Mensagem @create
+
+    createResposta(
+        reply: String! @rules(apply:["required"]),
+        date: String,
+        user_envia_id: Int! @rules(apply:["required"]),
+        user_recebe_id: Int! @rules(apply:["required"]),
+        mensagem_id: Int! @rules(apply:["required"])
+    ):Resposta @create
+
+    createLance(
+        data: String! @rules(apply:["required"]),
+        horaInicio: String! @rules(apply:["required"]),
+        horaFim: String! @rules(apply:["required"]),
+        descricao: String! @rules(apply:["required"]),
+        status: Int! @rules(apply:["required"]),
+        date:String,
+        user_lance_id: Int! @rules(apply:["required"]),
+        proposta_categoria_id: Int! @rules(apply:["required"])
+    ): Lance @create
+
+    updateLance(
+        id: ID! @rules(apply:["required"]),
+        status: Int! @rules(apply:["required"])
+    ): Lance @update
+
+    
+}
+
+
+input LoginInput {
+    username: String!
+    password: String!
+}
+
+input RefreshTokenInput {
+    refresh_token: String
+}
+
+type AuthPayload {
+    access_token: String!
+    refresh_token: String!
+    expires_in: Int!
+    token_type: String!
+}
+
+type LogoutResponse {
+    status: String!
+    message: String
+}
+
+type ForgotPasswordResponse {
+    status: String!
+    message: String
+}
+
+input ForgotPasswordInput {
+    email: String!
+}
+
+input NewPasswordWithCodeInput {
+    email: String!
+    token: String!
+    password: String!
+    password_confirmation: String!
+}
+
+extend type Mutation {
+    login(data: LoginInput): AuthPayload! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\Login@resolve")
+    refreshToken(data: RefreshTokenInput): AuthPayload! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\RefreshToken@resolve")
+    logout: LogoutResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\Logout@resolve")
+    forgotPassword(data: ForgotPasswordInput!): ForgotPasswordResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\ForgotPassword@resolve")
+    updateForgottenPassword(data: NewPasswordWithCodeInput): ForgotPasswordResponse! @field(resolver: "Joselfonseca\\LighthouseGraphQLPassport\\GraphQL\\Mutations\\ResetPassword@resolve")
+}
