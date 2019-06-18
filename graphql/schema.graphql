@@ -197,7 +197,7 @@ type Query{
     propostaEnvia(user_envia_id: Int!,orderBy: [OrderByClause!] @orderBy):[Proposta] @paginate(builder:"App\\GraphQL\\Queries\\PropostaEnvia@resolve")
     propostaRecebe(user_recebe_id:Int!,orderBy: [OrderByClause!] @orderBy):[Proposta] @paginate(builder:"App\\GraphQL\\Queries\\PropostaRecebe@resolve")
     propostaLimit(user_envia:Int!):[Proposta]
-    
+    countStatus(user_recebe:Int!):Int
     """ Consultas para orcamento """
     orcamentos: [Orcamento] @all
     orcamento(id: Int! @eq): Orcamento @find
@@ -216,7 +216,6 @@ type Query{
     propostaEnviaCat(user_envia:Int!,orderBy: [OrderByClause!] @orderBy):[PropostaCategoria] @paginate(builder:"App\\GraphQL\\Queries\\PropostaEnviaCat@resolve")
     propostaCatForUserEnvia(user_envia_id:Int!):[PropostaCategoria]
     propostaForCatLimit(category:Int!):[PropostaCategoria]
-    
 
     """ Consultas para lances """
     lances:[Lance] @all
